@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:tx="http://www.springframework.org/schema/tx" 
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation = "http://www.springframework.org/schema/beans		
+                  http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+                  http://www.springframework.org/schema/context
+                  http://www.springframework.org/schema/context/spring-context-4.0.xsd														
+                  http://www.springframework.org/schema/tx
+                  http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+                  http://www.springframework.org/schema/aop
+                  http://www.springframework.org/schema/aop/spring-aop-4.0.xsd"
+                  >
+
+       <!--<bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean"
+            p:jndiName="jdbc/jpetstore" />  -->
+            
+       <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+          <property  name="driverClass" value="com.mysql.jdbc.Driver"/>
+          <property  name="jdbcUrl" value="jdbc:mysql://112.124.1.214:3306/ewedding"/>
+          <property  name="user" value="root"/>
+          <property  name="password" value="97ce0bf974"/>
+          <property  name="maxPoolSize" value="30"/>
+          <property  name="minPoolSize" value="20"/>
+          <property  name="initialPoolSize" value="5"/>
+          <property  name="maxIdleTime" value="30"/>	
+       </bean>
+       <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">  
+            <property name="dataSource" ref="dataSource" />    
+            <property name="annotatedClasses">
+                <list>
+                    <value>com.dianzishangwu.yihunli.domain.user.UserEntity</value>
+                    <value>com.dianzishangwu.yihunli.domain.user.Address</value>
+                    <value>com.dianzishangwu.yihunli.domain.user.Individual</value>
+                    <value>com.dianzishangwu.yihunli.domain.user.Merchant</value>
+                </list> 
+            </property>	
+            <!--<property name="packagesToScan" value="com.dianzishangwu.yihunli.domain.user"/> -->
+            <property name="hibernateProperties">
+                <props>
+                    <prop key="hibernate.dialect">org.hibernate.dialect.MySQL5InnoDBDialect</prop>
+                    <prop key="hibernate.hbm2ddl.auto">update</prop>
+                    <prop key="hibernate.show_sql">true</prop>
+                    <prop key="format_sql">true</prop>
+                    <!--<prop key="hibernate.current_session_context_class">org.springframework.orm.hibernate3.SpringSessionContext</prop>  --> 
+                </props>                          
+            </property>                                                                                    
+       </bean> 
+       <bean id="userEntityService" class="com.dianzishangwu.yihunli.service.UserEntityService" >
+            <property name="userEntityDao" ref="userEntityDao"/>
+       </bean>
+
+       <bean id="userEntityDao" class="com.dianzishangwu.yihunli.domain.dao.UserEntityHibernate4">
+            <property name="sessionFactory" ref="sessionFactory"/>
+       </bean>
+            
+       <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+            <property name="sessionFactory" ref="sessionFactory"/>
+       </bean>
+       
+       <tx:advice id="txAdvice" transaction-manager="transactionManager">
+           <tx:attributes>
+                <tx:method name="get" read-only="true"/>
+                <tx:method name="*" isolation="DEFAULT" propagation="REQUIRED" timeout="5"/>
+           </tx:attributes>
+       </tx:advice>
+       
+       <aop:config>
+           <aop:pointcut id="mypointcut" expression="bean(*Service)"></aop:pointcut>
+           <aop:advisor advice-ref="txAdvice" pointcut-ref="mypointcut"/>
+       </aop:config>
+ </beans>
